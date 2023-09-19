@@ -66,7 +66,7 @@ namespace DarkLake.Tools.GraphEmailSender
             Microsoft.Graph.Users.Item.SendMail.SendMailPostRequestBody body = new()
             {
                 Message = message,
-                SaveToSentItems = true,  // or true, as you want
+                SaveToSentItems = false,  
 
 
             };
