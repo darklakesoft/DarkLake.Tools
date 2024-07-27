@@ -1,6 +1,8 @@
-﻿using Azure.Identity;
+﻿ using Azure.Identity;
 using Microsoft.Graph;
 using Microsoft.Graph.Models;
+using System.IO;
+using System.IO.Pipes;
 using System.Net.Mail;
 
 namespace DarkLake.Tools.GraphEmailSender
@@ -10,6 +12,8 @@ namespace DarkLake.Tools.GraphEmailSender
         string tenantId = string.Empty;
         string clientId = string.Empty;
         string clientSecret = string.Empty;
+
+        List<FileAttachment> files = new List<FileAttachment>();
 
         public GraphMailService() 
         {
@@ -63,11 +67,24 @@ namespace DarkLake.Tools.GraphEmailSender
                 });
             }
 
+            if (files != null && files.Count > 0) 
+            {
+                message.Attachments = new List<Microsoft.Graph.Models.Attachment>();   
+            
+                foreach (var file in files)
+                {
+                    message.Attachments.Add(file);
+                }
+            
+            }
+
+
+
             Microsoft.Graph.Users.Item.SendMail.SendMailPostRequestBody body = new()
             {
                 Message = message,
-                SaveToSentItems = false,  
-
+                SaveToSentItems = true,  
+                
 
             };
 
@@ -87,6 +104,33 @@ namespace DarkLake.Tools.GraphEmailSender
             }
 
             return true;
+        }
+
+        public void AddAttachment(string filePath)
+        {
+            if (files == null)
+                files = new List<FileAttachment>();
+
+            using (var fileStream = new FileStream(filePath, FileMode.Open))
+            {
+                files.Add(new FileAttachment()
+                {
+                    Name = Path.GetFileName(filePath),
+                    ContentType = "application/octet-stream",
+                    ContentBytes = ReadFully(fileStream)
+
+                });
+            }
+        }
+     
+
+        private byte[] ReadFully(Stream input)
+        {
+            using (var memoryStream = new MemoryStream())
+            {
+                input.CopyTo(memoryStream);
+                return memoryStream.ToArray();
+            }
         }
     }
 }
